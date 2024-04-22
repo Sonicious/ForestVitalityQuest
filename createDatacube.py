@@ -1,6 +1,7 @@
 from dask.distributed import Client
 import numpy as np
 import xarray as xr
+import rioxarray
 import argparse
 
 import os
@@ -8,7 +9,7 @@ import glob
 
 def main():
 
-    chunk_size = {'lat': 256, 'lon': 256}
+    chunk_size = {'x': 256, 'y': 256, 'time': 1}
 
     parser = argparse.ArgumentParser(description="Convert NetCDF files in a folder to a single Zarr dataset.")
     parser.add_argument("--input_dir", required=True, help="Path to the input directory containing NetCDF files.")
@@ -26,14 +27,14 @@ def main():
     # Open multiple datasets and add a new coordinate for year based on file names
     datasets = []
     for file_path in input_files:
-        time = int(file_path.split('\\')[-1].split('-')[-1].split('.')[0])  # Extract year from file name
-        ds = xr.open_dataset(file_path, chunks=chunk_size).drop_vars('crs').rename({'Band1': 'deadwood'})
+        time = int(file_path.split('\\')[-1].split('_')[-1].split('.')[0])  # Extract year from file name
+        ds = xr.open_dataset(file_path, chunks=chunk_size, decode_coords="all").drop_vars('lambert_azimuthal_equal_area').rename({'Band1': 'deadwood'})
         ds = ds.assign_coords(time=np.array(time))
         datasets.append(ds)
 
     # Concatenate along the new 'year' dimension
     combined_ds = xr.concat(datasets, dim='time')
-    combined_ds = combined_ds.transpose('time', 'lat', 'lon')
+    combined_ds = combined_ds.transpose('time', 'x', 'y')
 
     # clean the attributes
     # List of attributes to remove
@@ -46,6 +47,7 @@ def main():
             
     # Print the combined dataset
     print(combined_ds)
+    print('Dataset created successfully.')
 
     if not args.save_zarr:
         # ask to save as zarr
