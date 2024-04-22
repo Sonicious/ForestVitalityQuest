@@ -54,8 +54,8 @@ for testsite in sitesExtended.index:
             lat = sitesExtended.loc[[testsite]].center_y.values[0],
             lon = sitesExtended.loc[[testsite]].center_x.values[0],
             collection = 'sentinel-2-l2a',
-            # bands for NDVI
-            # bands = ['B02', 'B03', 'B04', 'B08'],
+            # NDVI: B08, B04
+            # RGB: B04, B03, B02
             bands = ['B04', 'B08'],
             start_date = startdate,
             end_date = enddate,
@@ -164,7 +164,7 @@ for testsite in sitesExtended.index:
         }
     )      
     finalSite = finalSite.drop_vars('lambert_azimuthal_equal_area')
-    finalSite.to_zarr(f'data/FinalSites/Site{testsite:002}.zarr', mode = 'w', consolidated = True)
+    finalSite.to_zarr(f'data/FinalSites/Site{testsite:03}.zarr', mode = 'w', consolidated = True)
     print(f"  Site {testsite} saved")
 
 print("All sites processed")
